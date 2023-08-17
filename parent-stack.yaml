@@ -1,0 +1,42 @@
+Parameters:
+  Environment:
+    Type: String
+
+Resources:
+  VpcStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://tu-stack-v2.s3.amazonaws.com/vpc.yaml
+      Parameters:
+        EnvironmentName: !Ref Environment
+
+  Ec2Stack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://tu-stack-v2.s3.amazonaws.com/app.yaml
+      Parameters:
+        PublicSubnet1ID: !GetAtt VpcStack.Outputs.PublicSubnet1
+        PublicSubnet2ID: !GetAtt VpcStack.Outputs.PublicSubnet2
+        vpcid: !GetAtt VpcStack.Outputs.VPC
+
+  RdsStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://tu-stack-v2.s3.amazonaws.com/RDS.yaml
+      Parameters:
+        PrivateSubnet1: !GetAtt VpcStack.Outputs.PrivateSubnet1
+        PrivateSubnet2: !GetAtt VpcStack.Outputs.PrivateSubnet2
+        MyVPCID: !GetAtt VpcStack.Outputs.VPC
+        EC2InstanceSecurityGroup: !GetAtt Ec2Stack.Outputs.SecurityGroupId
+  
+  AlbStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://tu-stack-v2.s3.amazonaws.com/alb.yaml
+      Parameters:
+        PublicSubnet1: !GetAtt VpcStack.Outputs.PublicSubnet1
+        PublicSubnet2: !GetAtt VpcStack.Outputs.PublicSubnet2
+        EC2InstanceSecurityGroup: !GetAtt Ec2Stack.Outputs.SecurityGroupId
+        MyVPCID: !GetAtt VpcStack.Outputs.VPC
+        EC2Instance1: !GetAtt Ec2Stack.Outputs.EC2Instance1Id
+        EC2Instance2: !GetAtt Ec2Stack.Outputs.EC2Instance2Id
