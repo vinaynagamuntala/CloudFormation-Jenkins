@@ -9,6 +9,7 @@ Resources:
       TemplateURL: https://tu-stack-v2.s3.amazonaws.com/vpc.yaml
       Parameters:
         EnvironmentName: !Ref Environment
+        #name
 
   Ec2Stack:
     Type: AWS::CloudFormation::Stack
