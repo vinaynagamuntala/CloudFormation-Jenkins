@@ -1,0 +1,91 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Parameters:
+  PublicSubnet1ID:
+    Description: An environment name that is prefixed to resource names
+    Type: String
+  PublicSubnet2ID:
+    Description: An environment name that is prefixed to resource names
+    Type: String 
+  vpcid:
+    Type: String
+
+Resources:
+  EC2InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "Security group for EC2 instances"
+      VpcId: !Ref vpcid
+  # Replace with the ID of your VPC
+      SecurityGroupIngress:
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: tcp
+          FromPort: 22  # SSH port
+          ToPort: 22    # SSH port
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: tcp
+          FromPort: 80  # HTTP port
+          ToPort: 80    # HTTP port
+
+  EC2Instance1:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0f34c5ae932e6f0e4  # Replace with the desired AMI ID for ap-south-1 region
+      InstanceType: t2.micro  # Specify the desired instance type
+      SubnetId: !Ref PublicSubnet1ID
+      PropagateTagsToVolumeOnCreation: true     
+      SecurityGroupIds:
+        - !Ref EC2InstanceSecurityGroup  
+      UserData: 
+        Fn::Base64: 
+          !Sub |
+            #!/bin/bash
+            yum update -y
+            yum install -y nginx
+            service nginx start
+      Tags: 
+        - Key: "Owner"
+          Value: "hariom.saini@cloudeq.com"  # Replace with the desired owner's email address
+        - Key: "Purpose"
+          Value: "Transunion_Bootcamp_Demo"  # Replace with the desired purpose or description 
+
+  EC2Instance2:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0f34c5ae932e6f0e4 # Replace with the desired AMI ID for ap-south-1 region
+      InstanceType: t2.micro  # Specify the desired instance type
+      SubnetId: !Ref PublicSubnet2ID # Replace with the ID of the second subnet 
+      PropagateTagsToVolumeOnCreation: true
+      SecurityGroupIds:
+        - !Ref EC2InstanceSecurityGroup
+      UserData: 
+        Fn::Base64: 
+          !Sub |
+            #!/bin/bash
+            yum update -y
+            yum install -y nginx
+            service nginx start
+      Tags: 
+        - Key: "Owner"
+          Value: "hariom.saini@cloudeq.com"  # Replace with the desired owner's email address
+        - Key: "Purpose"
+          Value: "Transunion_Bootcamp_Demo"  # Replace with the desired purpose or description
+
+Outputs:
+  EC2Instance1Id:
+    Description: "Instance ID of EC2Instance1"
+    Value: !Ref EC2Instance1
+    Export:
+      Name: EC2Instance1
+
+  EC2Instance2Id:
+    Description: "Instance ID of EC2Instance2"
+    Value: !Ref EC2Instance2
+    Export:
+      Name: EC2Instance2
+
+  SecurityGroupId:
+    Description: "Security Group ID of EC2InstanceSecurityGroup"
+    Value: !Ref EC2InstanceSecurityGroup
+    Export:
+      Name: EC2InstanceSecurityGroup

@@ -1,0 +1,85 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation Template for Amazon RDS MySQL Instance
+
+Parameters:
+  MyVPCID:
+    Description: VPC ID 
+    Type: String
+
+  PrivateSubnet1: 
+    Description: Private subnet 1
+    Type : String 
+
+  PrivateSubnet2: 
+    Description: Private subnet 2 
+    Type: String
+  
+  EC2InstanceSecurityGroup:
+    Description: EC2 Instance SG
+    Type: String
+
+  DBName:
+    Description: Name of the database to create
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: TU-Database-Name
+    
+  DBUsername:
+    Description: Username for the database admin
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: TU-Database-Username
+    
+  DBPassword:
+    Description: Password for the database admin
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: TU-Database-Password
+
+  DBInstanceClass:
+    Description: EC2 instance type for the RDS instance
+    Type: String
+    Default: db.t2.micro
+
+
+Resources:
+  RDSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: RDS security group
+      VpcId: !Ref MyVPCID
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '3306'
+          ToPort: '3306'
+          SourceSecurityGroupId: !Ref EC2InstanceSecurityGroup
+
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: DB Subnet Group for RDS
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+        
+
+  
+  RDSDBInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBName: !Ref DBName
+      DBInstanceIdentifier: 'TU-RDS'
+      AllocatedStorage: '20'
+      DBInstanceClass: !Ref DBInstanceClass
+      Engine: MySQL
+      EngineVersion: '8.0'
+      MasterUsername: !Ref DBUsername
+      MasterUserPassword: !Ref DBPassword
+      VPCSecurityGroups: 
+      - !Ref RDSSecurityGroup
+      DBSubnetGroupName: !Ref DBSubnetGroup
+
+
+Outputs:
+  
+  RDSEndpoint:
+    Description: Endpoint for the newly created RDS instance
+    Value: !GetAtt RDSDBInstance.Endpoint.Address
+    
